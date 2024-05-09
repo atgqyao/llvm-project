@@ -11,6 +11,7 @@ add_clang_library(clangTidyBugproneModule
   BoolPointerImplicitConversionCheck.cpp
   BranchCloneCheck.cpp
   BugproneTidyModule.cpp
+  BvaModelConstructorErrCheck.cpp
   CastingThroughVoidCheck.cpp
   ChainedComparisonCheck.cpp
   ComparePointerToMemberVirtualFunctionCheck.cpp
