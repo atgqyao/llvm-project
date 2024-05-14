@@ -41,7 +41,16 @@ void BvaModelConstructorErrCheck::registerMatchers(MatchFinder *Finder) {
   //`cxxConstructorDecl()` 是一个AST匹配器，用于匹配C++中的构造函数声明
   // hasDescendant匹配满足条件的构造函数
   // forEachDescendant遍历构造函数中的子节点，为后代节点执行绑定,用来在"已经选中的构造函数中进一步检查或操作内部的各个子节点
-  Finder->addMatcher(cxxConstructorDecl(hasDescendant(fieldDecl(hasName("is_open_")))).bind("constructor"), this);
+  // Finder->addMatcher(cxxConstructorDecl(hasDescendant(fieldDecl(hasName("is_open_")))).bind("constructor"), this);
+
+  Finder->addMatcher(
+    cxxConstructorDecl(
+      hasDescendant(
+        binaryOperator(hasLHS(memberExpr(member(hasName("is_open_")))))
+      )
+    ).bind("constructor"),
+    this
+  );
 
   // Finder->addMatcher(cxxConstructorDecl(hasDescendant(varDecl(hasName("n")).bind("var"))).bind("constructor"), this);
   //  Finder->addMatcher(varDecl(hasType(pointerType(pointee(pointerType(pointee(pointerType()))))))).bind("mulPtr");
