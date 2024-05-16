@@ -45,13 +45,20 @@ void BvaModelConstructorErrCheck::registerMatchers(MatchFinder *Finder) {
   // Finder->addMatcher(cxxConstructorDecl(hasDescendant(fieldDecl(hasName("is_open_")))).bind("constructor"),
   // this);
 
-  Finder->addMatcher(
-      cxxConstructorDecl(
-          hasDescendant(
-              binaryOperator(hasLHS(memberExpr(member(hasName("is_open_")))))
-                  .bind("binaryOp")))
-          .bind("constructor"),
-      this);
+//   Finder->addMatcher(
+//       cxxConstructorDecl(
+//           hasDescendant(
+//               binaryOperator(hasLHS(memberExpr(member(hasName("is_open_")))))
+//                   .bind("binaryOp")))
+//           .bind("constructor"),
+//       this);
+
+  Finder->addMatcher(cxxConstructorDecl(
+    hasDescendant(
+        varDecl(hasType(cxxRecordDecl(hasName("LogGuard"))))
+        .bind("macro"))
+        ), 
+        this);
 
   // Finder->addMatcher(cxxConstructorDecl(hasDescendant(varDecl(hasName("n")).bind("var"))).bind("constructor"),
   // this);
@@ -67,9 +74,8 @@ void BvaModelConstructorErrCheck::check(
   // const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
 
   // ConstructorDecl是构造函数指针
-  const auto *ConstructorDecl =
-      Result.Nodes.getNodeAs<CXXConstructorDecl>("constructor");
-  const auto *BinOp = Result.Nodes.getNodeAs<BinaryOperator>("binaryOp");
+//   const auto *ConstructorDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("constructor");
+//   const auto *BinOp = Result.Nodes.getNodeAs<BinaryOperator>("binaryOp");
   // if (!MatchedDecl->getIdentifier() ||
   // MatchedDecl->getName().starts_with("awesome_"))
   //   return;
@@ -77,11 +83,13 @@ void BvaModelConstructorErrCheck::check(
   //     << MatchedDecl
   //     << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_")
   // diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note);
-  diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assgned");
+//   diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assgned");
   // diag(ConstructorDecl->getLocation(), "constructor which has is_open_ member
   // expression ", DiagnosticIDs::Error);
-  diag(ConstructorDecl->getLocation(),
-       "constructor which has is_open_ member expression ");
+//   diag(ConstructorDecl->getLocation(), "constructor which has is_open_ member expression ");
+
+    const auto *MacroDecl = Result.Nodes.getNodeAs<VarDecl>("macro");
+    diag(MacroDecl->getLocation(), "LogGuard is defined");
 }
 
 } // namespace clang::tidy::bugprone
