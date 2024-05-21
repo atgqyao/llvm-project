@@ -105,10 +105,10 @@ void BvaModelConstructorErrCheck::check(
   //     << MatchedDecl
   //     << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_")
   // diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note);
-  diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assigned");
   // diag(ConstructorDecl->getLocation(), "constructor which has is_open_ member
   // expression ", DiagnosticIDs::Error);
-  diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard", DiagnosticIDs::Error);
+  diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard");
+  diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assigned", DiagnosticIDs::Note);
 
 
 //   const auto *MacroDecl = Result.Nodes.getNodeAs<VarDecl>("macro");
