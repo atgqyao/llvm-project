@@ -162,6 +162,11 @@ Improvements to clang-tidy
 New checks
 ^^^^^^^^^^
 
+- New :doc:`bugprone-bva-model-constructor-err
+  <clang-tidy/checks/bugprone/bva-model-constructor-err>` check.
+
+  FIXME: add release notes.
+
 - New :doc:`bugprone-casting-through-void
   <clang-tidy/checks/bugprone/casting-through-void>` check.
 
