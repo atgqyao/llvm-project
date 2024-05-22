@@ -90,10 +90,6 @@ Finder->addMatcher(
 // 回调函数，在AST匹配器匹配到指定模式后被调用
 void BvaModelConstructorErrCheck::check(
     const MatchFinder::MatchResult &Result) {
-  // FIXME: Add callback implementation.
-  // 用x这个名字取出这个节点，并检测函数名的前缀是否为awesome_，如果不是，则会提示可以将函数名前加上这个前缀
-  // MatchedDecl是匹配到的函数声明的指针
-  // const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
 
   // ConstructorDecl是构造函数指针
   const auto *ConstructorDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("constructor");
@@ -101,28 +97,18 @@ void BvaModelConstructorErrCheck::check(
   if (!ConstructorDecl || !BinOp) {
     return;
   }
-  // if (!MatchedDecl->getIdentifier() ||
-  // MatchedDecl->getName().starts_with("awesome_"))
-  //   return;
-  // diag(MatchedDecl->getLocation(), "function %0 is insufficiently awesome")
-  //     << MatchedDecl
-  //     << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_")
-  // diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note);
-  // diag(ConstructorDecl->getLocation(), "constructor which has is_open_ member
-  // expression ", DiagnosticIDs::Error);
   
   SourceLocation InsertLoc = ConstructorDecl->getBody()->getBeginLoc().getLocWithOffset(1);
   std::string LogGuardDeclCode = "\n    BVA_MODEL_CONSTRUCTOR_ERR_CHECK";
 
   auto FixIt = FixItHint::CreateInsertion(InsertLoc, LogGuardDeclCode);
   diag(InsertLoc, "constructor has is_open_ member expression but hasn't defined LogGuard") << FixIt;
-
   // diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard");
   diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assigned", DiagnosticIDs::Note);
 
+  
 
-//   const auto *MacroDecl = Result.Nodes.getNodeAs<VarDecl>("macro");
-//   diag(MacroDecl->getLocation(), "LogGuard is defined");
+
 }
 
 } // namespace clang::tidy::bugprone
