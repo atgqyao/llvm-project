@@ -98,6 +98,9 @@ void BvaModelConstructorErrCheck::check(
   // ConstructorDecl是构造函数指针
   const auto *ConstructorDecl = Result.Nodes.getNodeAs<CXXConstructorDecl>("constructor");
   const auto *BinOp = Result.Nodes.getNodeAs<BinaryOperator>("binaryOp");
+  if (!ConstructorDecl || !BinOp) {
+    return;
+  }
   // if (!MatchedDecl->getIdentifier() ||
   // MatchedDecl->getName().starts_with("awesome_"))
   //   return;
@@ -107,7 +110,14 @@ void BvaModelConstructorErrCheck::check(
   // diag(MatchedDecl->getLocation(), "insert 'awesome'", DiagnosticIDs::Note);
   // diag(ConstructorDecl->getLocation(), "constructor which has is_open_ member
   // expression ", DiagnosticIDs::Error);
-  diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard");
+  
+  SourceLocation InsertLoc = ConstructorDecl->getBody()->getBeginLoc().getLocWithOffset(1);
+  std::string LogGuardDeclCode = "\n    BVA_MODEL_CONSTRUCTOR_ERR_CHECK";
+
+  auto FixIt = FixItHint::CreateInsertion(InsertLoc, LogGuardDeclCode);
+  diag(InsertLoc, "constructor has is_open_ member expression but hasn't defined LogGuard") << FixIt;
+
+  // diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard");
   diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assigned", DiagnosticIDs::Note);
 
 
