@@ -10,6 +10,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/Lex/Lexer.h"
 using namespace clang::ast_matchers;
 
 namespace clang::tidy::bugprone {
@@ -101,13 +102,37 @@ void BvaModelConstructorErrCheck::check(
   SourceLocation InsertLoc = ConstructorDecl->getBody()->getBeginLoc().getLocWithOffset(1);
   std::string LogGuardDeclCode = "\n    BVA_MODEL_CONSTRUCTOR_ERR_CHECK";
 
+  bool IncludeHeader = false;
+  SourceManager &SM = *Result.SourceManager;
+  FileID ConstructorFileID = SM.getFileID(ConstructorDecl->getLocation());
+  // 获取clang编译器的语言选项
+  // const LangOptions &LangOpts = Result.Context->getLangOpts();
+
+  for  (auto it = SM.fileinfo_begin(); it != SM.fileinfo_end(); ++it) {
+    const FileEntry *entry = it->getFirst();
+    if (nullptr != entry && entry->getName().endswith("log_guard.h")) {
+      IncludeHeader = true;
+      break;
+    }
+  }
+  
+  // 如果没有包含log_guard.h头文件
+  if (!IncludeHeader) {
+    //获取文件开头的位置，用作头文件插入
+    SourceLocation HeaderIncludeLoc = SM.getLocForStartOfFile(ConstructorFileID);
+    //跳过空格和注释，从AST上下文中检索当前的编译器语言设置
+    HeaderIncludeLoc = clang::Lexer::GetBeginningOfToken(HeaderIncludeLoc, SM, Result.Context->getLangOpts());
+
+    std::string HeaderIncludeCode = "#include \"util/tools/log_guard.h\"\n";
+
+    auto FixIt = FixItHint::CreateInsertion(HeaderIncludeLoc, HeaderIncludeCode);
+    diag(HeaderIncludeLoc, "log_guard.h should be included at the top of the file.") << FixIt; 
+  }
+  
   auto FixIt = FixItHint::CreateInsertion(InsertLoc, LogGuardDeclCode);
   diag(InsertLoc, "constructor has is_open_ member expression but hasn't defined LogGuard") << FixIt;
   // diag(ConstructorDecl->getLocation(), "constructor has is_open_ member expression but haven't define LogGuard");
   diag(BinOp->getLHS()->getBeginLoc(), "is_open_ is assigned", DiagnosticIDs::Note);
-
-  
-
 
 }
 
