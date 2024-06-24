@@ -45,9 +45,10 @@ void BvaErrorCodeCheck::registerMatchers(MatchFinder *Finder) {
 void BvaErrorCodeCheck::check(const MatchFinder::MatchResult &Result) {
   const CXXMemberCallExpr *MatchedExpr =
       Result.Nodes.getNodeAs<CXXMemberCallExpr>("runSession");
-  diag(MatchedExpr->getExprLoc(), "call method RunSession", DiagnosticIDs::Note);
+  // diag(MatchedExpr->getExprLoc(), "call method RunSession", DiagnosticIDs::Note);
 
   const DynTypedNodeList &parents = Result.Context->getParents(*MatchedExpr);
+  const BinaryOperator *binaryOp = nullptr;
   
   for (const DynTypedNode &parent: parents) {
     // 将父节点作为BinaryOperator类型对象获取，如果父节点不是这种类型，返回nullptr
@@ -55,32 +56,56 @@ void BvaErrorCodeCheck::check(const MatchFinder::MatchResult &Result) {
     if (nullptr == parentStmt) {
       // 如果没有接收runSession的返回值
       diag(MatchedExpr->getBeginLoc(), "haven't defined a variable to receive the return value");
+      // diag(MatchedExpr->getExprLoc(), "call method RunSession", DiagnosticIDs::Note);
       return;
     } else {
       // 如果有变量接收runSession的返回值，再获取上一层父节点
-      // parents = Result.Context->getParents(*parentStmt);
+      // diag(parentStmt->getExprLoc(), "binary operator");
+      binaryOp = parentStmt;
       break;
     }
   }
 
   // 获取父节点
-  //       binaryOp = parentStmt;
-  //     parents = Result.Context->getParents(*parentStmt);
-  // const DynTypedNode &parentNode = parents[0];
-  // ASTNodeKind kind = parentNode.getNodeKind();
-  // llvm::outs() << "Node kind:" << kind.asStringRef() << "\n";
-  // const IfStmt *parent = parentNode.get<Stmt>();
-  // if (nullptr == parent) return;
+  const DynTypedNodeList &opParents = Result.Context->getParents(*binaryOp);
+  for (const DynTypedNode &parent: opParents) {
+    // ASTNodeKind kind = parent.getNodeKind();
+    // llvm::outs() << "Node kind:" << kind.asStringRef() << "\n";  
+    const Stmt *stmtNode = parent.get<Stmt>();
+    if (nullptr == stmtNode) {
+      // llvm::outs() << " failed to get the stmt node" << "\n";
+      diag(MatchedExpr->getBeginLoc(), "failed to get the parent node\n");
+      return;
+    } else {
+      // diag(stmtNode->getBeginLoc(), "detect stmt node");
+      // diag(MatchedExpr->getExprLoc(), "call method RunSession", DiagnosticIDs::Note);
+      // 遍历stmtNode的子节点，找到binaryOp的下一个节点
+      for (auto it = stmtNode->child_begin(); it != stmtNode->child_end(); ++it) {
+        // Stmt::StmtClass kind = (*it)->getStmtClass();
+        // const char *stmtName = (*it)->getStmtClassName();
+        
+        //查看子节点的行号
+        // SourceLocation loc = (*it)->getBeginLoc();
+        // SourceManager &SM = *Result.SourceManager;
+        // FullSourceLoc fullLoc(loc, SM);
+        // unsigned lineNum = fullLoc.getSpellingLineNumber();
 
-  // for (auto it = parent->child_begin(); it != parent->child_end(); ++it) {
-  //   if (it == binaryOp)
-  // }
-  
+        // llvm::outs() << "found a child node of class:" << stmtName << " line: "<< lineNum << "\n";
+        if (*it == binaryOp) {
+          // llvm::outs() << "match the binary operator" << "\n";
+          it++;
+          if (it == stmtNode->child_end() || (*it)->getStmtClass() != Stmt::IfStmtClass) {
+            diag(MatchedExpr->getBeginLoc(), "haven't checked the return value of RunSession");
+            return;
+          }
+          // 如果是if语句，判断条件表达式
+          const clang::IfStmt *ifStmt = clang::cast<clang::Stmt>(*it);
+          const clang::Expr *condExpr = ifStmt->getCond();
+          
+        }
+      }
+    }
 
-
-  // // 查看下一个节点，看是不是if语句
-  // if (MatchedExpr != nullptr) {
-  //   auto *parent = MatchedExpr->getRPare
-  // }
+  }
 }
 } // namespace clang::tidy::bugprone
